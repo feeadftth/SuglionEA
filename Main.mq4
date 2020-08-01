@@ -19,8 +19,8 @@ input int      BB_period = 20; //Periodo Bande di Bollinger
 input int      RSI_period = 2; //Periodo RSI
 
 input bool     Use_Trailing_Stop = True; //Opzione per l'uso del Trailing Stop
-input int      TrailingStart = 50; //Numero di pips di profitto oltre i quali si attiva il Trailing Stop
-input int      TrailingStep = 20; //Pips di differenza tra il prezzo attuale ed il Trailing Stop da impostare
+input int      TrailingStart = 100; //Numero di pips di profitto oltre i quali si attiva il Trailing Stop
+input int      TrailingStep = 60; //Pips di differenza tra il prezzo attuale ed il Trailing Stop da impostare
 
 //INIZIALIZZAZIONE VARIABILI GLOBALI
 double   Mean = 0;
@@ -84,7 +84,7 @@ void OnTick()
       RefreshRates(); //Aggiorna i valori per le funzioni standard, per variabili dichiarate globalmente
       
     //STOP LOSS
-    if(Use_Trailing_Stop == True)
+    if((Use_Trailing_Stop == True) && (OrdersTotal() != 0)) //Controlla se il Trailing Stop è abilitato e se ci sono ordini aperti
       {
       TrailingStop(TrailingStart, TrailingStep); //Funzione di Trailing Stop
       }
