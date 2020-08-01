@@ -80,14 +80,14 @@ void LogVarValues(double rsi_ref, double BandLo_ref, double BandHi_ref, double m
 //FUNZIONE DI TRAILING STOP
 void TrailingStop(int TrailingStart_ref, int TrailingStep_ref) 
       {
-      for(int n_order = OrdersTotal(); n_order >=0; n_order--) //Ciclo FOR per controllare tutti gli ordini
+      for(int n_order = OrdersTotal()-1; n_order >=0; n_order--) //Ciclo FOR per controllare tutti gli ordini
          {
          if(OrderSelect(n_order,SELECT_BY_POS,MODE_TRADES) != True) //Seleziona l'ordine numero n_order in ordine cronologico decrescente di apertura
            {
            GetLastError(); //Check per eventuali errori dell'OrderSelect
            } 
             
-            //TRAILING PER LE POSIZIONI SELL
+         //TRAILING PER LE POSIZIONI SELL
          if(OrderType() == OP_SELL)
            {
            if(OrderOpenPrice()>Ask+TrailingStart_ref*Point) //Controlla se la posizione è in profitto
@@ -97,7 +97,7 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
                if(OrderModify( //Funzione di modifica dell'ordine
                             OrderTicket(), //Ticket identificativo unico dell'ordine
                             OrderOpenPrice(), //Prezzo di apertura dell'ordine, non modificato
-                            Bid+TrailingStep_ref*Point, //Prezzo a cui viene impostato lo Stop Loss
+                            Ask+TrailingStep_ref*Point, //Prezzo a cui viene impostato lo Stop Loss
                             OrderTakeProfit(), //Take Profit dell'ordine, non modificato
                             0, //Scadenza dell'ordine
                             clrNONE
@@ -108,8 +108,8 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
                }
              }
            }
-           
-         if(OrderType() == OP_BUY) //Trailing per le posizioni Buy
+         //TRAILING PER LE POSIZIONI BUY  
+         if(OrderType() == OP_BUY) 
            {
            if(OrderOpenPrice()<Bid-TrailingStart_ref*Point) //Controlla se la posizione è in profitto
              {
@@ -118,7 +118,7 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
                if(OrderModify( //Funzione di modifica dell'ordine
                             OrderTicket(), //Ticket identificativo unico dell'ordine
                             OrderOpenPrice(), //Prezzo di apertura dell'ordine, non modificato
-                            Ask+TrailingStep_ref*Point, //Prezzo a cui viene impostato lo Stop Loss
+                            Bid-TrailingStep_ref*Point, //Prezzo a cui viene impostato lo Stop Loss
                             OrderTakeProfit(), //Take Profit dell'ordine, non modificato
                             0, //Scadenza dell'ordine
                             clrNONE
@@ -131,8 +131,3 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
            }
          }
       }
-         
-         
-         
-         
-         
