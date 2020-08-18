@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                                       Prova3.mq4 |
+//|                                                       Main.mq4 |
 //|                                                 Umberto Sugliano |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -54,7 +54,7 @@ void OnDeinit(const int reason)
 //ESECUZIONE AD OGNI TICK
 void OnTick()
   { 
-    bool MM_Check = 0;
+    bool MM_Check = 0; //Inizializzo la variabile booleana di check per il Money Management
 
     RefreshRates(); //Aggiorna i valori per le funzioni standard, per variabili dichiarate globalmente
 
