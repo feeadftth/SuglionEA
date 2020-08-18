@@ -1,11 +1,11 @@
 //+------------------------------------------------------------------+
-//|                                                       Main.mq4 |
+//|                                                    Main v1.2.mq4 |
 //|                                                 Umberto Sugliano |
 //|                                                                  |
 //+------------------------------------------------------------------+
 #property copyright "Umberto Sugliano"
 #property link      ""
-#property version   "1.1"
+#property version   "1.2"
 #property strict
 
 //DICHIARAZIONE LIBRERIE E HEADERS
@@ -19,8 +19,9 @@ input int      BB_period = 20; //Periodo Bande di Bollinger
 input int      RSI_period = 2; //Periodo RSI
 input int      ma_period = 2; //Periodo Moving Average
 input int      MM_Value = 85; //Money Management %
+input int      Max_Orders = 30; //Max Open Orders
 
-input bool     Use_Trailing_Stop = True; //Usa Trailing Stop
+input bool    Use_Trailing_Stop = True; //Usa Trailing Stop
 input int      TrailingStart = 100; //Numero di pips di profitto oltre i quali si attiva il Trailing Stop
 input int      TrailingStep = 60; //Pips di differenza tra il prezzo attuale ed il Trailing Stop da impostare
 
@@ -31,17 +32,32 @@ double   BandLo = 0;
 double   BandHi = 0;
 double   rsi = 0;
 double   LastOrderPrice =0;
+double   Balance=AccountBalance();
+double   Equity = AccountEquity();
+double   Profit = AccountProfit();
+
+int      O_orders = OrdersTotal();
 int      LastOrderBar = 1;
 int      hival = 0;
 int      lowval = 0;
 datetime LastOrderTime = 0;
 
 
-
 int OnInit()
   {
    //RICERCA DI SUPPORTO E RESISTENZA
    SupAndRes(hival, lowval, Mean, bars_check_number);
+   
+   //ETICHETTE STATISTICHE CHART
+   LabelCreate("Balance",225,1,"Balance = ");
+   LabelCreate("Balance Value",285,1,"");
+   LabelCreate("Equity",335,1,"Equity = ");
+   LabelCreate("Equity Value",385,1,"");
+   LabelCreate("Profit",435,1,"Current Profit = ");
+   LabelCreate("Profit Value",525,1,"");
+   LabelCreate("Open Orders",575,1,"Open Orders = ");
+   LabelCreate("Open Orders Value",665,1,"");
+   
    return(INIT_SUCCEEDED);
   }
 
@@ -57,14 +73,21 @@ void OnTick()
     bool MM_Check = 0; //Inizializzo la variabile booleana di check per il Money Management
 
     RefreshRates(); //Aggiorna i valori per le funzioni standard, per variabili dichiarate globalmente
-
+    
     Select(); //Selziona l'ultimo ordine
     LastOrderPrice = OrderOpenPrice(); //Prezzo dell'ultimo ordine selezionato
     
+    O_orders = OrdersTotal(); //Calcolo numero ordini aperti
+    Profit = AccountProfit(); //Calcolo Profit Attuale
+    Equity = AccountEquity(); //Calcolo Equity
+    Balance = AccountBalance(); //Calcolo Balance
     BandHi = iBands(NULL,0,BB_period,2,0,0,1,0); //Calcolo BB superiore
     BandLo = iBands(NULL,0,BB_period,2,0,0,2,0); //Calcolo BB inferiore
     ma = iMA(NULL,0,ma_period,0,0,0,0); //Calcolo MA
     rsi = iRSI(NULL,0,RSI_period,PRICE_MEDIAN,0); //Calcolo RSI
+    
+    //ESECUZIONE FUNZIONE PER LE STATISTICHE IN ALTO SUL GRAFICO
+    Stats(Equity, Balance, Profit, O_orders);
     
     if(LastOrderTime !=0) //Se LastOrderTime è 0, allora non c'è alcun ordine aperto
       {
@@ -72,11 +95,11 @@ void OnTick()
       };
     
     //MONEY MANAGEMENT CHECK
-    MM_Check = MoneyManagement(MM_Value); //Imposta la variabile MM_Check al valore di ritorno di MoneyManagement
+    MM_Check = MoneyManagement(MM_Value, Equity, Balance); //Imposta la variabile MM_Check al valore di ritorno di MoneyManagement
     Print(MM_Check);
 
     //SELL
-    if((!MM_Check) && (Bid>ma) && (Bid>Mean) && (Bid>BandHi) && (LastOrderBar != 0) && (rsi>=70) && (LastOrderPrice+pips_gap*Point<Bid)) //Check condizioni di apertura Sell
+    if((O_orders <= Max_Orders) && (!MM_Check) && (Bid>ma) && (Bid>Mean) && (Bid>BandHi) && (LastOrderBar != 0) && (rsi>=70) && (LastOrderPrice+pips_gap*Point<Bid)) //Check condizioni di apertura Sell
       {
       SendSell(lot_size); //Apre posizione Sell
       Select(); //Seleziona l'ordine appena aperto per il check al prossimo tick
@@ -84,7 +107,7 @@ void OnTick()
       };
       
     //BUY  
-    if((!MM_Check) && (Ask<ma) && (Ask<Mean) && (Bid<BandLo) && (LastOrderBar != 0) && (rsi<=30) && (LastOrderPrice-pips_gap*Point>Ask))  //Check condizioni di apertura Buy
+    if((O_orders <= Max_Orders) && (!MM_Check) && (Ask<ma) && (Ask<Mean) && (Bid<BandLo) && (LastOrderBar != 0) && (rsi<=30) && (LastOrderPrice-pips_gap*Point>Ask))  //Check condizioni di apertura Buy
       {
       SendBuy(lot_size); //Apre posizione Buy      
       Select();  //Seleziona l'ordine appena aperto per il check al prossimo tick
