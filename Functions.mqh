@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                            Prova 2 Functions.mqh |
+//|                                            Functions.mqh |
 //|                                                 Umberto Sugliano |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -130,4 +130,22 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
              }
            }
          }
+      }
+
+//FUNZIONE DI MONEY MANAGEMENT
+bool MoneyManagement(int MM_Value_ref) //La funzione è di tipo bool, cioè ritorna un valore booleano (vero o falso, 1 o 0)
+      {
+      double XPercent = double(MM_Value_ref)/100; //Conversione in valore percentuale dell'input di Money Management
+      double Equity = AccountEquity(); //Double di Liquidità
+      double Balance = AccountBalance(); //Double di Bilancio
+      double Ratio = Equity/Balance; //Double di rapporto tra liquidità e bilancio (<1 significa che il profit è negativo)
+
+      if(Ratio <= XPercent) //Se il rapporto è inferiore alla percentuale indicata in input, la funzione ritorna true => 1
+        {
+        return true;
+        }
+      else //altrimenti ritorna false => 0
+        {
+         return false;
+        }
       }
