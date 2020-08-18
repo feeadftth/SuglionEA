@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                            Functions.mqh |
+//|                                                    Functions.mqh |
 //|                                                 Umberto Sugliano |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -133,12 +133,10 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
       }
 
 //FUNZIONE DI MONEY MANAGEMENT
-bool MoneyManagement(int MM_Value_ref) //La funzione è di tipo bool, cioè ritorna un valore booleano (vero o falso, 1 o 0)
+bool MoneyManagement(int MM_Value_ref, double Equity_ref, double Balance_ref) //La funzione è di tipo bool, cioè ritorna un valore booleano (vero o falso, 1 o 0)
       {
       double XPercent = double(MM_Value_ref)/100; //Conversione in valore percentuale dell'input di Money Management
-      double Equity = AccountEquity(); //Double di Liquidità
-      double Balance = AccountBalance(); //Double di Bilancio
-      double Ratio = Equity/Balance; //Double di rapporto tra liquidità e bilancio (<1 significa che il profit è negativo)
+      double Ratio = Equity_ref/Balance_ref; //Double di rapporto tra liquidità e bilancio (<1 significa che il profit è negativo)
 
       if(Ratio <= XPercent) //Se il rapporto è inferiore alla percentuale indicata in input, la funzione ritorna true => 1
         {
@@ -149,3 +147,65 @@ bool MoneyManagement(int MM_Value_ref) //La funzione è di tipo bool, cioè rito
          return false;
         }
       }
+
+//STATISTICS LABELS UPDATER FUNCTION
+void Stats(double Equity_ref, double Balance_ref, double Profit_ref, int O_orders_ref) 
+      {
+      string Ord = IntegerToString(O_orders_ref, 0); //Conversione a stringa del valore intero di ordini aperti
+      string Prft = DoubleToStr(Profit_ref, 2); //Conversione a stringa del valore double di Profit
+      string Blnc = DoubleToStr(Balance_ref, 2); //^^ per il Balance
+      string Eqty = DoubleToStr(Equity_ref, 2); //^^ per l'Equity
+      ObjectSetString(0,"Balance Value", OBJPROP_TEXT, Blnc); //Modifica valore Balance
+      ObjectSetString(0,"Equity Value", OBJPROP_TEXT, Eqty); //Modifica valore Equity
+      ObjectSetString(0,"Profit Value", OBJPROP_TEXT, Prft); //Modifica valore Profit
+      ObjectSetString(0,"Open Orders Value", OBJPROP_TEXT, Ord);
+      }
+
+//FUNZIONE DI CREAZIONE LABELS PER DATI
+bool LabelCreate(        const string name,            // label name
+                         const int               x,    // X coordinate
+                         const int               y,    // Y coordinate
+                         const string          text)   // text
+  {
+  
+   //Definizione costanti che NON VARIANO tra le varie labels
+   const long              chart_ID = 0; //Chart ID
+   const int                sub_window = 0; //Indice Sottofinestra
+   const ENUM_BASE_CORNER corner = CORNER_LEFT_UPPER; //Angolo da usare come punto di partenza
+   const string            font = "Arial"; //Font
+   const int                font_size = 9; //Font size
+   const color             clr = clrWhite; //Label Color
+   const double          angle = 0.0; //Inclinazione della label
+   const ENUM_ANCHOR_POINT anchor=ANCHOR_LEFT_UPPER; //Angolo da usare come centro di rotazione
+   const bool              back=false;               //Sullo sfondo rispetto al resto = false
+   const bool              selection=false;          //Spostabile con mouse = false
+   const bool              hidden=true;              //Nascosto nella lista oggetti = true
+   const long              z_order=0;                //Priorità rispetto ai click col mouse
+   
+
+   ResetLastError(); //Resetta il valore di ultimo errore
+
+   if(!ObjectCreate(chart_ID,name,OBJ_LABEL,sub_window,0,0)) //Creazione oggetto (funzione booleana) con if statement per catch
+     {
+      Print(__FUNCTION__,
+            ": failed to create text label! Error code = ",GetLastError()); //Catch per eventualli errori
+      return(false);
+     }
+
+   ObjectSetInteger(chart_ID,name,OBJPROP_XDISTANCE,x); //Coordinata X
+   ObjectSetInteger(chart_ID,name,OBJPROP_YDISTANCE,y); //Coordinata Y
+   ObjectSetInteger(chart_ID,name,OBJPROP_CORNER,corner); //Angolo del grafico
+   ObjectSetString(chart_ID,name,OBJPROP_TEXT,text); //Testo
+   ObjectSetString(chart_ID,name,OBJPROP_FONT,font); //Font
+   ObjectSetInteger(chart_ID,name,OBJPROP_FONTSIZE,font_size); //Font Size
+   ObjectSetDouble(chart_ID,name,OBJPROP_ANGLE,angle); //Angolo d'inclinazione
+   ObjectSetInteger(chart_ID,name,OBJPROP_ANCHOR,anchor); //Centro di rotazione
+   ObjectSetInteger(chart_ID,name,OBJPROP_COLOR,clr); //Colore
+   ObjectSetInteger(chart_ID,name,OBJPROP_BACK,back); //Opzione per embedding nel background (true=embedded)
+   ObjectSetInteger(chart_ID,name,OBJPROP_SELECTABLE,selection); //Opzione per muovere il label col mouse (true=abilitato)
+   ObjectSetInteger(chart_ID,name,OBJPROP_SELECTED,selection); // ^^
+   ObjectSetInteger(chart_ID,name,OBJPROP_HIDDEN,hidden); //Mostra nella Lista Oggetti (true=visibile)
+   ObjectSetInteger(chart_ID,name,OBJPROP_ZORDER,z_order); //Priorità click del mouse sul grafico
+
+   return(true);
+  }
