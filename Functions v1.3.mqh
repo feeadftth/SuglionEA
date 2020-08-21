@@ -5,28 +5,8 @@
 //+------------------------------------------------------------------+
 #property copyright "Umberto Sugliano"
 #property link      ""
+#property version   "1.3"
 #property strict
-//+------------------------------------------------------------------+
-//| defines                                                          |
-//+------------------------------------------------------------------+
-// #define MacrosHello   "Hello, world!"
-// #define MacrosYear    2010
-//+------------------------------------------------------------------+
-//| DLL imports                                                      |
-//+------------------------------------------------------------------+
-// #import "user32.dll"
-//   int      SendMessageA(int hWnd,int Msg,int wParam,int lParam);
-// #import "my_expert.dll"
-//   int      ExpertRecalculate(int wParam,int lParam);
-// #import
-//+------------------------------------------------------------------+
-//| EX5 imports                                                      |
-//+------------------------------------------------------------------+
-// #import "stdlib.ex5"
-//   string ErrorDescription(int error_code);
-// #import
-//+------------------------------------------------------------------+
-
 
 //RICERCA DI SOSTEGNO, RESISTENZA E VALORE MEDIO
 //Parametri formali passati per referenza e non coincidono con le variabili globali
@@ -133,12 +113,12 @@ void TrailingStop(int TrailingStart_ref, int TrailingStep_ref)
       }
 
 //FUNZIONE DI MONEY MANAGEMENT
-bool MoneyManagement(int MM_Value_ref, double Equity_ref, double Balance_ref) //La funzione è di tipo bool, cioè ritorna un valore booleano (vero o falso, 1 o 0)
+bool MoneyManagement(bool Use_MM_ref, int MM_Value_ref, double Equity_ref, double Balance_ref) //La funzione è di tipo bool, cioè ritorna un valore booleano (vero o falso, 1 o 0)
       {
       double XPercent = double(MM_Value_ref)/100; //Conversione in valore percentuale dell'input di Money Management
       double Ratio = Equity_ref/Balance_ref; //Double di rapporto tra liquidità e bilancio (<1 significa che il profit è negativo)
 
-      if(Ratio <= XPercent) //Se il rapporto è inferiore alla percentuale indicata in input, la funzione ritorna true => 1
+      if((Ratio <= XPercent) || (!Use_MM_ref)) //Se il rapporto è inferiore alla percentuale indicata in input, la funzione ritorna true => 1
         {
         return true;
         }
@@ -169,18 +149,18 @@ bool LabelCreate(        const string name,            // label name
   {
   
    //Definizione costanti che NON VARIANO tra le varie labels
-   const long              chart_ID = 0; //Chart ID
-   const int                sub_window = 0; //Indice Sottofinestra
+   const long              chart_ID = 0;              //Chart ID
+   const int                sub_window = 0;           //Indice Sottofinestra
    const ENUM_BASE_CORNER corner = CORNER_LEFT_UPPER; //Angolo da usare come punto di partenza
-   const string            font = "Arial"; //Font
-   const int                font_size = 9; //Font size
-   const color             clr = clrWhite; //Label Color
-   const double          angle = 0.0; //Inclinazione della label
-   const ENUM_ANCHOR_POINT anchor=ANCHOR_LEFT_UPPER; //Angolo da usare come centro di rotazione
-   const bool              back=false;               //Sullo sfondo rispetto al resto = false
-   const bool              selection=false;          //Spostabile con mouse = false
-   const bool              hidden=true;              //Nascosto nella lista oggetti = true
-   const long              z_order=0;                //Priorità rispetto ai click col mouse
+   const string            font = "Arial";            //Font
+   const int                font_size = 9;            //Font size
+   const color             clr = clrWhite;            //Label Color
+   const double          angle = 0.0;                 //Inclinazione della label
+   const ENUM_ANCHOR_POINT anchor=ANCHOR_LEFT_UPPER;  //Angolo da usare come centro di rotazione
+   const bool              back=false;                //Sullo sfondo rispetto al resto = false
+   const bool              selection=false;           //Spostabile con mouse = false
+   const bool              hidden=true;               //Nascosto nella lista oggetti = true
+   const long              z_order=0;                 //Priorità rispetto ai click col mouse
    
 
    ResetLastError(); //Resetta il valore di ultimo errore
@@ -192,20 +172,151 @@ bool LabelCreate(        const string name,            // label name
       return(false);
      }
 
-   ObjectSetInteger(chart_ID,name,OBJPROP_XDISTANCE,x); //Coordinata X
-   ObjectSetInteger(chart_ID,name,OBJPROP_YDISTANCE,y); //Coordinata Y
-   ObjectSetInteger(chart_ID,name,OBJPROP_CORNER,corner); //Angolo del grafico
-   ObjectSetString(chart_ID,name,OBJPROP_TEXT,text); //Testo
-   ObjectSetString(chart_ID,name,OBJPROP_FONT,font); //Font
-   ObjectSetInteger(chart_ID,name,OBJPROP_FONTSIZE,font_size); //Font Size
-   ObjectSetDouble(chart_ID,name,OBJPROP_ANGLE,angle); //Angolo d'inclinazione
-   ObjectSetInteger(chart_ID,name,OBJPROP_ANCHOR,anchor); //Centro di rotazione
-   ObjectSetInteger(chart_ID,name,OBJPROP_COLOR,clr); //Colore
-   ObjectSetInteger(chart_ID,name,OBJPROP_BACK,back); //Opzione per embedding nel background (true=embedded)
+   ObjectSetInteger(chart_ID,name,OBJPROP_XDISTANCE,x);          //Coordinata X
+   ObjectSetInteger(chart_ID,name,OBJPROP_YDISTANCE,y);          //Coordinata Y
+   ObjectSetInteger(chart_ID,name,OBJPROP_CORNER,corner);        //Angolo del grafico
+   ObjectSetString(chart_ID,name,OBJPROP_TEXT,text);             //Testo
+   ObjectSetString(chart_ID,name,OBJPROP_FONT,font);             //Font
+   ObjectSetInteger(chart_ID,name,OBJPROP_FONTSIZE,font_size);   //Font Size
+   ObjectSetDouble(chart_ID,name,OBJPROP_ANGLE,angle);           //Angolo d'inclinazione
+   ObjectSetInteger(chart_ID,name,OBJPROP_ANCHOR,anchor);        //Centro di rotazione
+   ObjectSetInteger(chart_ID,name,OBJPROP_COLOR,clr);            //Colore
+   ObjectSetInteger(chart_ID,name,OBJPROP_BACK,back);            //Opzione per embedding nel background (true=embedded)
    ObjectSetInteger(chart_ID,name,OBJPROP_SELECTABLE,selection); //Opzione per muovere il label col mouse (true=abilitato)
-   ObjectSetInteger(chart_ID,name,OBJPROP_SELECTED,selection); // ^^
-   ObjectSetInteger(chart_ID,name,OBJPROP_HIDDEN,hidden); //Mostra nella Lista Oggetti (true=visibile)
-   ObjectSetInteger(chart_ID,name,OBJPROP_ZORDER,z_order); //Priorità click del mouse sul grafico
+   ObjectSetInteger(chart_ID,name,OBJPROP_SELECTED,selection);   // ^^
+   ObjectSetInteger(chart_ID,name,OBJPROP_HIDDEN,hidden);        //Mostra nella Lista Oggetti (true=visibile)
+   ObjectSetInteger(chart_ID,name,OBJPROP_ZORDER,z_order);       //Priorità click del mouse sul grafico
 
    return(true);
   }
+
+
+/*------------------------------------------------
+FUNZIONI BOOLEANE DEI FILTRI DI APERTURA POSIZIONI
+Il funzionamento degli switch ON/OFF per le
+conidzioni di apertura delle posizioni è ottenuto
+usando una condizione OR (||) in degli if statements
+che quindi ritorneranno true se si verifica la
+condizione oppure se la variabile booleana che
+attiva la condizione stessa è impostata su false.
+Es. In PipsGap_SELL, se LastOrderPrice ecc si verifica
+OPPURE se Use_Pips_Gap è impostata su false, allora la
+funzione ritorna true
+------------------------------------------------*/
+
+//PIPS GAP CHECK SELL
+bool PipsGap_SELL(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice_ref)
+    {
+    if((LastOrderPrice_ref+pips_gap_ref*Point<Bid) || !(Use_Pips_Gap_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//PIPS GAP CHECK BUY
+bool PipsGap_BUY(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice_ref)
+    {
+    if((LastOrderPrice_ref-pips_gap_ref*Point>Ask) || !(Use_Pips_Gap_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//MAX ORDERS CHECK
+bool MaxOrders(bool Use_Max_Orders_ref, int O_orders_ref, int Max_Orders_ref)
+    {
+    if((O_orders_ref < Max_Orders_ref) || (!Use_Max_Orders_ref)) 
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//MOVING AVERAGE CHECK SELL
+bool MA_Check_SELL(bool Use_Moving_Average_ref, double ma_ref)
+    {
+    if((ma_ref<Bid) || (!Use_Moving_Average_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//MOVING AVERAGE CHECK BUY
+bool MA_Check_BUY(bool Use_Moving_Average_ref, double ma_ref)
+    {
+    if((ma_ref>Ask) || (!Use_Moving_Average_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//RSI CHECK SELL
+bool RSI_Check_SELL(bool Use_RSI_Check_ref, double rsi_ref)
+    {
+    if((rsi_ref>=70) || (!Use_RSI_Check_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//RSI CHECK BUY
+bool RSI_Check_BUY(bool Use_RSI_Check_ref, double rsi_ref)
+    {
+    if((rsi_ref<=30) || (!Use_RSI_Check_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//BOLLINGER BANDS CHECK SELL
+bool BB_Check_SELL(bool Use_BB_ref, double BandHi_ref)
+    {
+    if((BandHi_ref<Bid) || (!Use_BB_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
+
+//BOLLINGER BANDS CHECK BUY
+bool BB_Check_BUY(bool Use_BB_ref, double BandLo_ref)
+    {
+    if((BandLo_ref>Bid) || (!Use_BB_ref))
+      {
+      return true;
+      }
+    else
+      {
+      return false;
+      }
+    }
