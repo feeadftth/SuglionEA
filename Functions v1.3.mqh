@@ -10,17 +10,66 @@
 
 //RICERCA DI SOSTEGNO, RESISTENZA E VALORE MEDIO
 //Parametri formali passati per referenza e non coincidono con le variabili globali
-void SupAndRes(int &H, int &L, double &M, const int bars_check_number_Ref) 
-      { 
-      H = iHighest(NULL,0,3,bars_check_number_Ref,0); //Ricerca su coppia attuale, timeframe attuale, su prezzi close e dal dato 0 iniziale
-      L = iLowest(NULL,0,3,bars_check_number_Ref,0); //Ricerca su coppia attuale, timeframe attuale, su prezzi close e dal dato 0 iniziale
-      double Hi = Close[H];
-      double Lo = Close[L];
-      ObjectCreate("Res", OBJ_HLINE, 0, Time[0], Hi, 0, 0);
-      ObjectCreate("Sup", OBJ_HLINE, 0, Time[0], Lo, 0, 0);
-      M = (Hi+Lo)/2;
-      ObjectCreate("Mean", OBJ_HLINE, 0, Time[0], M, 0, 0);
+void SupAndRes(double &Amp_ref, double &Hi_ref, double &Lo_ref, double &Mean_ref, const int bars_check_number_ref) 
+    { 
+    int Hi_bar = iHighest(NULL,0,3,bars_check_number_ref,0); //Ricerca su coppia attuale, timeframe attuale, su prezzi close e dal dato 0 iniziale
+    int Lo_bar = iLowest(NULL,0,3,bars_check_number_ref,0); //Ricerca su coppia attuale, timeframe attuale, su prezzi close e dal dato 0 iniziale
+    Hi_ref = NormalizeDouble(Close[Hi_bar], 6);
+    Lo_ref = NormalizeDouble(Close[Lo_bar], 6);
+    ObjectCreate("Res", OBJ_HLINE, 0, Time[0], Hi_ref, 0, 0);
+    ObjectCreate("Sup", OBJ_HLINE, 0, Time[0], Lo_ref, 0, 0);
+    Mean_ref = (Hi_ref+Lo_ref)/2;
+    ObjectCreate("Mean", OBJ_HLINE, 0, Time[0], Mean_ref, 0, 0);
+    double Price_diff = (Hi_ref - Lo_ref);
+    Amp_ref = NormalizeDouble(Price_diff, 6) / _Point;
+    }
+
+//RICERCA DINAMICA DI SOSTEGNO, RESISTENZA E VALORE MEDIO
+//Se il gafico ha rotto le mura dell'oscillazione di un valore uguale ad una percentuale dell'oscillazione 
+//specificata in input da SupResTolerance, i prezzi di sostegno e resistenza vengono aggiornati a quelli attuali
+//Chiamata della funzione: DynamicSupAndRes(Amp, SupResTolerance, Hi_ref, Lo_ref, Mean_ref, bars_check_number)
+void DynamicSupAndRes(int &test_ref, double &Amp_ref, const int SupResTolerance_ref, double &Hi_ref, double &Lo_ref, double &Mean_ref, const int bars_check_number_ref)
+    {
+    bool change = false;
+    int DynamicHi_bar = iHighest(NULL,0,3,bars_check_number_ref,0);
+    int DynamicLo_bar = iLowest(NULL,0,3,bars_check_number_ref,0);
+    double DynamicHi_ref = NormalizeDouble(Close[DynamicHi_bar], 6);
+    double DynamicLo_ref = NormalizeDouble(Close[DynamicLo_bar], 6);
+    
+    double DynHiPoint = DynamicHi_ref /_Point;
+    double DynLoPoint = DynamicLo_ref /_Point;
+    double HiPoint = Hi_ref /_Point;
+    double LoPoint = Lo_ref /_Point;
+
+    double Tolerance = Amp_ref*SupResTolerance_ref*0.01;
+    Print(Tolerance);
+       
+    if(((DynHiPoint)>(HiPoint+Tolerance)) || ((DynHiPoint)<(HiPoint-(Tolerance))))
+      {
+      Hi_ref = NormalizeDouble(DynamicHi_ref, 6);
+      change = true;
+      ObjectSet("Res", OBJ_HLINE, Hi_ref);
+      test_ref++;
       }
+  
+
+    if(((DynLoPoint)<(LoPoint-Tolerance)) || ((DynLoPoint)>(LoPoint+(Tolerance))))
+      {
+      Lo_ref = NormalizeDouble(DynamicLo_ref, 6);
+      change = true;
+      ObjectSet("Sup", OBJ_HLINE, Lo_ref);
+      test_ref++;
+      }
+
+    if(change)
+      {
+      Mean_ref = (Hi_ref+Lo_ref)/2;
+      ObjectSet("Mean", OBJ_HLINE, Mean_ref);
+      double Price_diff = (Hi_ref - Lo_ref);
+      Amp_ref = NormalizeDouble(Price_diff, 6) /_Point;
+      }
+    }
+
 
 //SELEZIONE ULTIMO ORDINE APERTO
 void Select() 
@@ -131,7 +180,7 @@ bool MoneyManagement(bool Use_MM_ref, int MM_Value_ref, double Equity_ref, doubl
 //STATISTICS LABELS UPDATER FUNCTION
 void Stats(double Equity_ref, double Balance_ref, double Profit_ref, int O_orders_ref) 
       {
-      string Ord = IntegerToString(O_orders_ref, 0); //Conversione a stringa del valore intero di ordini aperti
+      string Ord = DoubleToStr(O_orders_ref, 5); //Conversione a stringa del valore intero di ordini aperti
       string Prft = DoubleToStr(Profit_ref, 2); //Conversione a stringa del valore double di Profit
       string Blnc = DoubleToStr(Balance_ref, 2); //^^ per il Balance
       string Eqty = DoubleToStr(Equity_ref, 2); //^^ per l'Equity
