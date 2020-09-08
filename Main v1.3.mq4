@@ -18,7 +18,10 @@ input double   lot_size=0.01;
 input int      bars_check_number=100; //Barre per calcolo Oscillazione
 
 input bool     Use_Pips_Gap = true; //Usa Pips Gap to Open
-input int      pips_gap_input = 30; //Pips
+input int      pips_gap_input = 30; //Base Pips Gap
+
+input bool     Use_Dyn_Pips_Gap = true; //Usa Dynamic Pips Gap
+input int      Dyn_Gap_Mult = 3; //% Moltiplicatore Dyn Pips Gap
 
 input bool     Use_BB = true; //Usa Bollinger Bands
 input int      BB_period = 20; //Periodo Bande di Bollinger
@@ -54,12 +57,13 @@ double   DynamicLo;
 double   DynamicMean;
 double   Hi = 0;
 double   Lo = 0;
+double   MaxDrawback = AccountProfit();
 
 int      O_orders = OrdersTotal();
 int      LastOrderBar = 1;
 int      pips_gap_dyn = pips_gap_input;
 
-int test = 0;
+int ChngCount = 0;
 
 double    Amp = 0;
 datetime LastOrderTime = 0;
@@ -79,6 +83,8 @@ int OnInit()
    LabelCreate("Profit Value",525,1,"");
    LabelCreate("Open Orders",575,1,"Open Orders = ");
    LabelCreate("Open Orders Value",665,1,"");
+   LabelCreate("Max Drawback",705,1,"Max Drawback = ");
+   LabelCreate("Max Drawback Value",795,1,"");
    
    Print( "High = ", Hi, " Low = ", Lo, " Amp = ", Amp);
    return(INIT_SUCCEEDED);
@@ -94,12 +100,17 @@ void OnDeinit(const int reason)
 void OnTick()
   { 
     RefreshRates(); //Aggiorna i valori per le funzioni standard, per variabili dichiarate globalmente
+
+    LogVarValues(rsi, BandLo, BandHi, ma);
     
     Select(); //Selziona l'ultimo ordine
     LastOrderPrice = OrderOpenPrice(); //Prezzo dell'ultimo ordine selezionato
 
-    DynamicSupAndRes(test, Amp, SupResTolerance, Hi, Lo, Mean, bars_check_number);
-    pips_gap_dyn = MathRound(Amp*0.03);
+    //CALCOLO DINAMICO DI SOSTEGNO E RESISTENZA
+    DynamicSupAndRes(ChngCount, Amp, SupResTolerance, Hi, Lo, Mean, bars_check_number);
+
+    //CALCOLO DINAMICO DEL PIPS GAP
+    DynamicPipsGap(Use_Dyn_Pips_Gap, pips_gap_input, pips_gap_dyn, Amp, Dyn_Gap_Mult);
     
     O_orders = OrdersTotal(); //Calcolo numero ordini aperti
     Profit = AccountProfit(); //Calcolo Profit Attuale
@@ -109,9 +120,13 @@ void OnTick()
     BandLo = iBands(NULL,0,BB_period,2,0,0,2,0); //Calcolo BB inferiore
     ma = iMA(NULL,0,ma_period,0,0,0,0); //Calcolo MA
     rsi = iRSI(NULL,0,RSI_period,PRICE_MEDIAN,0); //Calcolo RSI
+    if(Profit<MaxDrawback)
+      {
+      MaxDrawback = Profit;
+      }
     
     //ESECUZIONE FUNZIONE PER LE STATISTICHE IN ALTO SUL GRAFICO
-    Stats(Equity, Balance, Profit, pips_gap_dyn);
+    Stats(Equity, Balance, Profit, O_orders, MaxDrawback);
     
     Print( "High = ", Hi/_Point, " Low = ", Lo/_Point, " Amp = ", Amp); //TESTING
     
@@ -159,5 +174,4 @@ void OnTick()
       {
       TrailingStop(TrailingStart, TrailingStep); //Funzione di Trailing Stop
       }
-      
   }
