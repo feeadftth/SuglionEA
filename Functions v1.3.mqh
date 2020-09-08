@@ -12,69 +12,83 @@
 //Parametri formali passati per referenza e non coincidono con le variabili globali
 void SupAndRes(double &Amp_ref, double &Hi_ref, double &Lo_ref, double &Mean_ref, const int bars_check_number_ref) 
     { 
-    int Hi_bar = iHighest(NULL,0,3,bars_check_number_ref,0); //Ricerca su coppia attuale, timeframe attuale, su prezzi close e dal dato 0 iniziale
-    int Lo_bar = iLowest(NULL,0,3,bars_check_number_ref,0); //Ricerca su coppia attuale, timeframe attuale, su prezzi close e dal dato 0 iniziale
-    Hi_ref = NormalizeDouble(Close[Hi_bar], 6);
-    Lo_ref = NormalizeDouble(Close[Lo_bar], 6);
-    ObjectCreate("Res", OBJ_HLINE, 0, Time[0], Hi_ref, 0, 0);
-    ObjectCreate("Sup", OBJ_HLINE, 0, Time[0], Lo_ref, 0, 0);
-    Mean_ref = (Hi_ref+Lo_ref)/2;
-    ObjectCreate("Mean", OBJ_HLINE, 0, Time[0], Mean_ref, 0, 0);
-    double Price_diff = (Hi_ref - Lo_ref);
-    Amp_ref = NormalizeDouble(Price_diff, 6) / _Point;
+    int Hi_bar = iHighest(NULL,0,3,bars_check_number_ref,0);  //Calcolo della barra globale in cui c'è il prezzo più alto
+    int Lo_bar = iLowest(NULL,0,3,bars_check_number_ref,0);   //Calcolo della barra globale in cui c'è il prezzo più basso
+    Hi_ref = NormalizeDouble(Close[Hi_bar], 6);               //Calcolo del prezzo globale più alto, normalizzato
+    Lo_ref = NormalizeDouble(Close[Lo_bar], 6);               //Calcolo del prezzo globale più basso. normalizzato
+    ObjectCreate("Res", OBJ_HLINE, 0, Time[0], Hi_ref, 0, 0); //Creazione linea di Resistenza
+    ObjectCreate("Sup", OBJ_HLINE, 0, Time[0], Lo_ref, 0, 0); //Creazione linea di Sostegno
+    Mean_ref = (Hi_ref+Lo_ref)/2;                             //Calcolo del prezzo medio
+    ObjectCreate("Mean", OBJ_HLINE, 0, Time[0], Mean_ref, 0, 0); //Creazione linea di media
+    double Price_diff = (Hi_ref - Lo_ref);                    //Calcolo della differenza di prezzo tra Sup e Res
+    Amp_ref = NormalizeDouble(Price_diff, 6) / _Point;        //Normalizzazione e conversione in pips di Price_diff
     }
 
 //RICERCA DINAMICA DI SOSTEGNO, RESISTENZA E VALORE MEDIO
 //Se il gafico ha rotto le mura dell'oscillazione di un valore uguale ad una percentuale dell'oscillazione 
 //specificata in input da SupResTolerance, i prezzi di sostegno e resistenza vengono aggiornati a quelli attuali
-//Chiamata della funzione: DynamicSupAndRes(Amp, SupResTolerance, Hi_ref, Lo_ref, Mean_ref, bars_check_number)
-void DynamicSupAndRes(int &test_ref, double &Amp_ref, const int SupResTolerance_ref, double &Hi_ref, double &Lo_ref, double &Mean_ref, const int bars_check_number_ref)
+//Chiamata della funzione: DynamicSupAndRes(ChngCount, Amp, SupResTolerance, Hi_ref, Lo_ref, Mean_ref, bars_check_number)
+void DynamicSupAndRes(int &ChngCount_ref, double &Amp_ref, const int SupResTolerance_ref, double &Hi_ref, double &Lo_ref, double &Mean_ref, const int bars_check_number_ref)
     {
-    bool change = false;
-    int DynamicHi_bar = iHighest(NULL,0,3,bars_check_number_ref,0);
-    int DynamicLo_bar = iLowest(NULL,0,3,bars_check_number_ref,0);
-    double DynamicHi_ref = NormalizeDouble(Close[DynamicHi_bar], 6);
-    double DynamicLo_ref = NormalizeDouble(Close[DynamicLo_bar], 6);
+    bool change = false; //Booleano che indica se è stato effettuato un cambio di Sup o Res
+    int DynamicHi_bar = iHighest(NULL,0,3,bars_check_number_ref,0); //Calcolo della barra dyn in cui c'è il prezzo più alto
+    int DynamicLo_bar = iLowest(NULL,0,3,bars_check_number_ref,0); //Calcolo della barra dyn in cui c'è il prezzo più basso
+    double DynamicHi_ref = NormalizeDouble(Close[DynamicHi_bar], 6); //Calcolo del prezzo dyn più alto, normalizzato
+    double DynamicLo_ref = NormalizeDouble(Close[DynamicLo_bar], 6); //Calcolo del prezzo dyn più basso, normalizzato
     
-    double DynHiPoint = DynamicHi_ref /_Point;
-    double DynLoPoint = DynamicLo_ref /_Point;
-    double HiPoint = Hi_ref /_Point;
-    double LoPoint = Lo_ref /_Point;
+    double DynHiPoint = DynamicHi_ref /_Point; //Conversione prezzo dyn  più alto in pips
+    double DynLoPoint = DynamicLo_ref /_Point; //Conversione prezzo dyn più basso in pips
+    double HiPoint = Hi_ref /_Point; //Conversione prezzo globale più alto in pips
+    double LoPoint = Lo_ref /_Point; //Conversione prezzo globale più basso in pips
 
-    double Tolerance = Amp_ref*SupResTolerance_ref*0.01;
-    Print(Tolerance);
-       
+    double Tolerance = Amp_ref*SupResTolerance_ref*0.01; //Calcolo valore di Tolerance, funzionamento spiegato sopra
+    Print(Tolerance); //Stampa di Tolerance per testing
+    
+    //Res Check
+    //Se il prezzo dyn è più alto di quello globale + Tolerance oppure più basso di quello globale - Tolerance, allora opera
     if(((DynHiPoint)>(HiPoint+Tolerance)) || ((DynHiPoint)<(HiPoint-(Tolerance))))
-      {
-      Hi_ref = NormalizeDouble(DynamicHi_ref, 6);
-      change = true;
-      ObjectSet("Res", OBJ_HLINE, Hi_ref);
-      test_ref++;
+      {                                                                                                                 
+      Hi_ref = NormalizeDouble(DynamicHi_ref, 6); //Normalizzazione del prezzo dyn più alto, già calcolato
+      change = true;                              //Imposta change su true
+      ObjectSet("Res", OBJ_HLINE, Hi_ref);        //Sposta la linea di Res al nuovo prezzo
+      ChngCount_ref++;                            //Incrementa la variabile di conteggio
       }
   
-
+    //Sup Check
     if(((DynLoPoint)<(LoPoint-Tolerance)) || ((DynLoPoint)>(LoPoint+(Tolerance))))
       {
-      Lo_ref = NormalizeDouble(DynamicLo_ref, 6);
-      change = true;
-      ObjectSet("Sup", OBJ_HLINE, Lo_ref);
-      test_ref++;
+      Lo_ref = NormalizeDouble(DynamicLo_ref, 6); //Normalizzazione del prezzo dyn più basso
+      change = true;                              //Imposta change su true
+      ObjectSet("Sup", OBJ_HLINE, Lo_ref);        //Sposta la linea di Sup al nuovo prezzo
+      ChngCount_ref++;                            //Incrementa la variabile di conteggio
       }
 
-    if(change)
+    if(change) //Se change è stato impostato su true, quindi se sono stati aggiornati i prezzi globali di Sup e/o Res
       {
-      Mean_ref = (Hi_ref+Lo_ref)/2;
-      ObjectSet("Mean", OBJ_HLINE, Mean_ref);
-      double Price_diff = (Hi_ref - Lo_ref);
-      Amp_ref = NormalizeDouble(Price_diff, 6) /_Point;
+      Mean_ref = (Hi_ref+Lo_ref)/2;                      //Ricalcola il prezzo medio
+      ObjectSet("Mean", OBJ_HLINE, Mean_ref);            //Sposta la linea di media al nuovo prezzo
+      double Price_diff = (Hi_ref - Lo_ref);             //Ricalcolo della differenza di prezzo tra i nuovi Sup e Res
+      Amp_ref = NormalizeDouble(Price_diff, 6) /_Point;  //Normalizzazione e conversione in pips di Price_diff
       }
     }
 
 
+//DYNAMIC PIPS GAP
+//Il pips gap necessario per aprire una nuova posizione varia in base alla ampiezza dell'oscillazione (Amp_ref)
+//di un valore percentuale intero definito in input (Dyn_Gap_Mult_ref)
+//Chiamata di funzione: DynamicPipsGap(Use_Dyn_Pips_Gap, pips_gap_input, pips_gap_dyn, Amp, Dyn_Gap_Mult)
+void DynamicPipsGap(bool Use_Dyn_Pips_Gap_ref, const int pips_gap_input_ref, int &pips_gap_dyn_ref, double Amp_ref, const int Dyn_Gap_Mult_ref)
+      {
+      if(Use_Dyn_Pips_Gap_ref)
+        {
+        pips_gap_dyn_ref = MathRound(Amp_ref*Dyn_Gap_Mult_ref*0.01);
+        }
+      } 
+
 //SELEZIONE ULTIMO ORDINE APERTO
 void Select() 
       {
-      if(OrderSelect(OrdersTotal()-1,SELECT_BY_POS) != True)
+      if(!OrderSelect(OrdersTotal()-1,SELECT_BY_POS))
          {
          GetLastError();
          }
@@ -83,7 +97,7 @@ void Select()
 //ESECUZIONE ORDINE BUY
 void SendBuy(double lot_size_ref) 
       {
-      if(OrderSend(NULL,0,lot_size_ref,Ask,3,0,0,NULL,0,0,clrGreen) != True) 
+      if(!OrderSend(NULL,0,lot_size_ref,Ask,3,0,0,NULL,0,0,clrGreen)) 
          {
          GetLastError();
          }     
@@ -92,7 +106,7 @@ void SendBuy(double lot_size_ref)
 //ESECUZIONE ORDINE SELL
 void SendSell(double lot_size_ref)
       {
-      if(OrderSend(NULL,1,lot_size_ref,Bid,3,0,0,NULL,0,0,clrRed)!= True) 
+      if(!OrderSend(NULL,1,lot_size_ref,Bid,3,0,0,NULL,0,0,clrRed)) 
          {
          GetLastError();
          }
@@ -178,17 +192,48 @@ bool MoneyManagement(bool Use_MM_ref, int MM_Value_ref, double Equity_ref, doubl
       }
 
 //STATISTICS LABELS UPDATER FUNCTION
-void Stats(double Equity_ref, double Balance_ref, double Profit_ref, int O_orders_ref) 
+void Stats(double Equity_ref, double Balance_ref, double Profit_ref, int O_orders_ref, double MaxDrawback_ref) 
       {
-      string Ord = DoubleToStr(O_orders_ref, 5); //Conversione a stringa del valore intero di ordini aperti
+      string Max = DoubleToStr(MaxDrawback_ref, 2); //Conversione a stringa del valore double di massimo drawback
+      string Ord = IntegerToString(O_orders_ref); //Conversione a stringa del valore intero di ordini aperti
       string Prft = DoubleToStr(Profit_ref, 2); //Conversione a stringa del valore double di Profit
       string Blnc = DoubleToStr(Balance_ref, 2); //^^ per il Balance
       string Eqty = DoubleToStr(Equity_ref, 2); //^^ per l'Equity
+
       ObjectSetString(0,"Balance Value", OBJPROP_TEXT, Blnc); //Modifica valore Balance
       ObjectSetString(0,"Equity Value", OBJPROP_TEXT, Eqty); //Modifica valore Equity
       ObjectSetString(0,"Profit Value", OBJPROP_TEXT, Prft); //Modifica valore Profit
-      ObjectSetString(0,"Open Orders Value", OBJPROP_TEXT, Ord);
+      ObjectSetString(0,"Open Orders Value", OBJPROP_TEXT, Ord); //Modifica valore Ordini Aperti
+      ObjectSetString(0,"Max Drawback Value", OBJPROP_TEXT, Max); //Modifica valore Max Drawback
       }
+
+//AGGIORNAMENTO DELLE VARIABILI USATE (PULIZIA DEL MAIN)
+//Chiamata della funzione: RefreshVars(MaxDrawback, O_orders, Profit, Equity, Balance, BandHi, BandLo, BB_period, ma, ma_period, rsi, RSI_period);
+/*void RefreshVars(double &MaxDrawback_ref, //Massimo drawback
+                int &O_orders_ref, //Ordini aperti
+                double &Profit_ref, //Real time profit su posizioni aperte
+                double &Equity_ref, //Liquidità
+                double &Balance_ref, //Balance
+                double &BandHi_ref, double &BandLo_ref, const int BB_period_ref, //Variabili Bollinger Bands
+                double &ma_ref, const int ma_period_ref,  //Variabili Moving Average
+                double &rsi_ref, const int RSI_period_ref) //Variabilli RSI
+      {
+      O_orders_ref = OrdersTotal(); //Calcolo numero ordini aperti
+      Profit_ref = AccountProfit(); //Calcolo Profit Attuale
+      Equity_ref = AccountEquity(); //Calcolo Equity
+      Balance_ref = AccountBalance(); //Calcolo Balance
+      BandHi_ref = iBands(NULL,0,BB_period,2,0,0,1,0); //Calcolo BB superiore
+      BandLo_ref = iBands(NULL,0,BB_period,2,0,0,2,0); //Calcolo BB inferiore
+      ma_ref = iMA(NULL,0,ma_period,0,0,0,0); //Calcolo MA
+      rsi_ref = iRSI(NULL,0,RSI_period,PRICE_MEDIAN,0); //Calcolo RSI
+
+      if(Profit_ref < MaxDrawback_ref)
+        {
+        MaxDrawback_ref = Profit_ref;
+        }
+      }*/
+
+
 
 //FUNZIONE DI CREAZIONE LABELS PER DATI
 bool LabelCreate(        const string name,            // label name
@@ -256,7 +301,7 @@ funzione ritorna true
 //PIPS GAP CHECK SELL
 bool PipsGap_SELL(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice_ref)
     {
-    if((LastOrderPrice_ref+pips_gap_ref*Point<Bid) || !(Use_Pips_Gap_ref))
+    if((LastOrderPrice_ref+pips_gap_ref*Point<Bid) || (!Use_Pips_Gap_ref))
       {
       return true;
       }
@@ -269,7 +314,7 @@ bool PipsGap_SELL(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice
 //PIPS GAP CHECK BUY
 bool PipsGap_BUY(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice_ref)
     {
-    if((LastOrderPrice_ref-pips_gap_ref*Point>Ask) || !(Use_Pips_Gap_ref))
+    if((LastOrderPrice_ref-pips_gap_ref*Point>Ask) || (!Use_Pips_Gap_ref))
       {
       return true;
       }
