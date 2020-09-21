@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Umberto Sugliano"
 #property link      ""
-#property version   "1.3"
+#property version   "1.5"
 #property strict
 
 //RICERCA DI SOSTEGNO, RESISTENZA E VALORE MEDIO
@@ -83,7 +83,7 @@ void DynamicPipsGap(bool Use_Dyn_Pips_Gap_ref, const int pips_gap_input_ref, int
         {
         pips_gap_dyn_ref = MathRound(Amp_ref*Dyn_Gap_Mult_ref*0.01);
         }
-      } 
+      }
 
 //SELEZIONE ULTIMO ORDINE APERTO
 void Select() 
@@ -301,7 +301,7 @@ funzione ritorna true
 //PIPS GAP CHECK SELL
 bool PipsGap_SELL(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice_ref)
     {
-    if((LastOrderPrice_ref+pips_gap_ref*Point<Bid) || (!Use_Pips_Gap_ref))
+    if((LastOrderPrice_ref+pips_gap_ref*Point<Bid) || !(Use_Pips_Gap_ref))
       {
       return true;
       }
@@ -314,7 +314,7 @@ bool PipsGap_SELL(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice
 //PIPS GAP CHECK BUY
 bool PipsGap_BUY(bool Use_Pips_Gap_ref ,int pips_gap_ref, double LastOrderPrice_ref)
     {
-    if((LastOrderPrice_ref-pips_gap_ref*Point>Ask) || (!Use_Pips_Gap_ref))
+    if((LastOrderPrice_ref-pips_gap_ref*Point>Ask) || !(Use_Pips_Gap_ref))
       {
       return true;
       }
