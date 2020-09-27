@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                               Functions v1.6.mqh |
+//|                                                    Functions.mqh |
 //|                                                 Umberto Sugliano |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -299,12 +299,15 @@ void Stats(bool Use_Stats_ref, bool Use_Conditions_Stats_ref,
       //STATISTICHE AVANZATE - "Use_Conditions_Stats = false" per disattivarle
       if(Use_Conditions_Stats_ref)
         {
+
+        double drawback_perc = (((Equity/Balance)-1)*100);
+
         string ma_str = DoubleToStr(ma_ref, 5); //Conversione a stringa del Moving Average
         string BandHi_str = DoubleToStr(BandHi_ref, 5); //Conversione a stringa della High BB
         string BandLo_str = DoubleToStr(BandLo_ref, 5); //Conversione a stringa della Low BB
         string rsi_str = DoubleToStr(rsi_ref, 2); //Conversione a stringa dell'RSI
         string pips_str = IntegerToString(pips_gap_dyn_ref); //Conversione a stringa del Pips Gap
-        string MM_str = IntegerToString(MM_Value_ref); //Conversione a stringa della percentuale di MM
+        string MM_str = DoubleToStr(drawback_perc, 2); //Conversione a stringa della percentuale di MM
         string MaxOrd_str = IntegerToString(Max_Orders_ref); //Conversione a stringa degli Ordini Massimi
 
         ObjectSetString(0,"MA Value", OBJPROP_TEXT, ma_str); //Modifica valore Moving Average
@@ -313,7 +316,7 @@ void Stats(bool Use_Stats_ref, bool Use_Conditions_Stats_ref,
         ObjectSetString(0,"BB Lo Value", OBJPROP_TEXT, BandLo_str); //Modifica valore Low BB
         ObjectSetString(0,"Pips Gap Value", OBJPROP_TEXT, pips_str); //Modifica valore Pips Gap
         ObjectSetString(0,"MaxOrd Value", OBJPROP_TEXT, MaxOrd_str); //Modifica valore Ordini Massimi
-        ObjectSetString(0,"MonMan Value", OBJPROP_TEXT, MM_str); //Modifica valore MM
+        ObjectSetString(0,"MonMan Value", OBJPROP_TEXT, MM_str + "%"); //Modifica valore MM
 
         
         //LIGHT-UP CONDITIONS
@@ -393,6 +396,11 @@ void Stats(bool Use_Stats_ref, bool Use_Conditions_Stats_ref,
           ObjectSetInteger(0,"Pips Gap", OBJPROP_COLOR, clrRed);
           ObjectSetInteger(0,"Pips Gap Value", OBJPROP_COLOR, clrRed);
           }
+        else if(PipsBuy_ref && PipsSell_ref)
+          {
+          ObjectSetInteger(0,"Pips Gap", OBJPROP_COLOR, clrMagenta);
+          ObjectSetInteger(0,"Pips Gap Value", OBJPROP_COLOR, clrMagenta);
+          }
         else
           {
           ObjectSetInteger(0,"Pips Gap", OBJPROP_COLOR, clrDodgerBlue);
@@ -455,8 +463,16 @@ void ConditionsCheck(bool Use_Max_Orders_ref, int O_orders_ref, int Max_Orders_r
     MaxOrd_ref = MaxOrders(Use_Max_Orders_ref, O_orders_ref, Max_Orders_ref); //Chiamata funzione di controllo Max Orders
     MonMan_ref = !MoneyManagement(Use_MM_ref, MM_Value_ref, Equity_ref, Balance_ref); //Chiamata funzione di controllo Money Management
 
-    PipsSell_ref = PipsGap_SELL(Use_Pips_Gap_ref, pips_gap_dyn_ref, LastOrderPrice_ref); //Chiamata funzione di controllo Pips Gap Sell
-    PipsBuy_ref = PipsGap_BUY(Use_Pips_Gap_ref, pips_gap_dyn_ref, LastOrderPrice_ref); //Chiamata funzione di controllo Pips Gap Buy
+    if(LastOrderPrice_ref != 0)
+      {
+      PipsSell_ref = PipsGap_SELL(Use_Pips_Gap_ref, pips_gap_dyn_ref, LastOrderPrice_ref); //Chiamata funzione di controllo Pips Gap Sell
+      PipsBuy_ref = PipsGap_BUY(Use_Pips_Gap_ref, pips_gap_dyn_ref, LastOrderPrice_ref); //Chiamata funzione di controllo Pips Gap Buy
+      }
+    else
+      {
+      PipsSell_ref = true;
+      PipsBuy_ref = true;
+      }
 
     //Funzioni di controllo per la posizione rispetto alla linea mediana, che prima era controllata direttamente negli IF di BUY e SELL in Main
     if(Bid>Mean_ref+(Amp_ref*0.01*Clearance_ref*Use_Clearance_ref)*Point)
