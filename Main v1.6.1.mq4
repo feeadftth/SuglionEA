@@ -35,9 +35,12 @@ int OnInit()
    //ETICHETTE INDICATORI E CONDIZIONI DI APERTURA
    if(Use_Conditions_Stats) 
      {  
+     string MM_string = IntegerToString(100-MM_Value);
+     string MM_label = "Money Management (" + MM_string + "%) = ";
+
      LabelCreate("Conditions",140,97,"CONDITIONS", CORNER_RIGHT_LOWER);
-     LabelCreate("MonMan",173,78,"Money Management = ", CORNER_RIGHT_LOWER);
-     LabelCreate("MonMan Value",48,78,"", CORNER_RIGHT_LOWER);
+     LabelCreate("MonMan",195,78, MM_label, CORNER_RIGHT_LOWER);
+     LabelCreate("MonMan Value",37,78,"", CORNER_RIGHT_LOWER);
      LabelCreate("MaxOrd",148,63,"Max Orders = ", CORNER_RIGHT_LOWER);
      LabelCreate("MaxOrd Value",73,63,"", CORNER_RIGHT_LOWER);
      LabelCreate("Pips Gap",137,48,"Pips Gap = ", CORNER_RIGHT_LOWER);
